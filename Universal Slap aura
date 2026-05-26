@@ -1,0 +1,199 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+local MainGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local UICorner_Main = Instance.new("UICorner")
+local UIStroke_Main = Instance.new("UIStroke")
+local TitleLabel = Instance.new("TextLabel")
+local MinimizeButton = Instance.new("TextButton")
+local ContentFrame = Instance.new("Frame")
+local ToggleButton = Instance.new("TextButton")
+local UICorner_Btn = Instance.new("UICorner")
+
+MainGui.Name = "UniversalSlapAura_FixedVector"
+MainGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+MainGui.ResetOnSpawn = false
+MainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = MainGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainFrame.BackgroundTransparency = 0.5
+MainFrame.Position = UDim2.new(0.5, -100, 0.4, -50)
+MainFrame.Size = UDim2.new(0, 200, 0, 100)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+
+UICorner_Main.CornerRadius = UDim.new(0, 10)
+UICorner_Main.Parent = MainFrame
+
+UIStroke_Main.Parent = MainFrame
+UIStroke_Main.Thickness = 2.5
+UIStroke_Main.Color = Color3.fromRGB(130, 0, 255)
+
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Parent = MainFrame
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Position = UDim2.new(0, 10, 0, 5)
+TitleLabel.Size = UDim2.new(0, 140, 0, 25)
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.Text = "SLAP AURA"
+TitleLabel.TextColor3 = Color3.fromRGB(165, 70, 255)
+TitleLabel.TextSize = 16
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+MinimizeButton.Name = "MinimizeButton"
+MinimizeButton.Parent = MainFrame
+MinimizeButton.BackgroundTransparency = 1
+MinimizeButton.Position = UDim2.new(1, -30, 0, 5)
+MinimizeButton.Size = UDim2.new(0, 25, 0, 25)
+MinimizeButton.Font = Enum.Font.SourceSansBold
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.TextSize = 20
+
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Parent = MainFrame
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Position = UDim2.new(0, 0, 0, 35)
+ContentFrame.Size = UDim2.new(1, 0, 1, -35)
+
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = ContentFrame
+ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+ToggleButton.Position = UDim2.new(0.5, -70, 0.5, -18)
+ToggleButton.Size = UDim2.new(0, 140, 0, 35)
+ToggleButton.Font = Enum.Font.SourceSansBold
+ToggleButton.Text = "STATUS: OFF"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 14
+
+UICorner_Btn.CornerRadius = UDim.new(0, 6)
+UICorner_Btn.Parent = ToggleButton
+
+local dragging, dragInput, dragStart, startPos
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+MainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+task.spawn(function()
+    while MainGui and MainGui.Parent do
+        local t1 = TweenService:Create(UIStroke_Main, TweenInfo.new(0.6, Enum.EasingStyle.Linear), {Color = Color3.fromRGB(255, 0, 255)})
+        t1:Play()
+        t1.Completed:Wait()
+        local t2 = TweenService:Create(UIStroke_Main, TweenInfo.new(0.6, Enum.EasingStyle.Linear), {Color = Color3.fromRGB(110, 0, 220)})
+        t2:Play()
+        t2.Completed:Wait()
+    end
+end)
+
+local isMinimized = false
+MinimizeButton.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        ContentFrame.Visible = false
+        MainFrame.Size = UDim2.new(0, 200, 0, 35)
+        MinimizeButton.Text = "+"
+    else
+        ContentFrame.Visible = true
+        MainFrame.Size = UDim2.new(0, 200, 0, 100)
+        MinimizeButton.Text = "-"
+    end
+end)
+
+_G.SlapAuraEnabled = false
+ToggleButton.MouseButton1Click:Connect(function()
+    _G.SlapAuraEnabled = not _G.SlapAuraEnabled
+    if _G.SlapAuraEnabled then
+        ToggleButton.Text = "STATUS: ON"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 205, 50)
+    else
+        ToggleButton.Text = "STATUS: OFF"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    end
+end)
+
+local function getSlapTool()
+    local Backpack = LocalPlayer:FindFirstChild("Backpack")
+    local Character = LocalPlayer.Character
+    
+    if Character then
+        for _, item in ipairs(Character:GetChildren()) do
+            if item:IsA("Tool") and string.match(item.Name, "Slap") then
+                return item
+            end
+        end
+    end
+    
+    if Backpack then
+        for _, item in ipairs(Backpack:GetChildren()) do
+            if item:IsA("Tool") and string.match(item.Name, "Slap") then
+                return item
+            end
+        end
+    end
+    
+    return nil
+end
+
+RunService.Heartbeat:Connect(function()
+    if _G.SlapAuraEnabled then
+        local Character = LocalPlayer.Character
+        local myRoot = Character and Character:FindFirstChild("HumanoidRootPart")
+        local SlapTool = getSlapTool()
+        local SlapEvent = SlapTool and SlapTool:FindFirstChild("Event")
+        
+        if myRoot and SlapEvent then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
+                    local enemyChar = player.Character
+                    local enemyRoot = enemyChar:FindFirstChild("HumanoidRootPart")
+                    local enemyHumanoid = enemyChar:FindFirstChildOfClass("Humanoid")
+                    
+                    if enemyRoot and enemyHumanoid and enemyHumanoid.Health > 0 then
+                        local dX = math.abs(myRoot.Position.X - enemyRoot.Position.X)
+                        local dY = math.abs(myRoot.Position.Y - enemyRoot.Position.Y)
+                        local dZ = math.abs(myRoot.Position.Z - enemyRoot.Position.Z)
+                        
+                        if dX <= 15 and dY <= 15 and dZ <= 15 then
+                            local randomX = math.random(-5, 5) + math.random()
+                            local randomY = math.random(-5, 5) + math.random()
+                            local randomZ = math.random(-5, 5) + math.random()
+                            
+                            local args = {
+                                [1] = "slash",
+                                [2] = enemyChar,
+                                [3] = Vector3.new(randomX, randomY, randomZ)
+                            }
+                            pcall(function()
+                                SlapEvent:FireServer(unpack(args))
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
