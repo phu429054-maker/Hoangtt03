@@ -1,0 +1,88 @@
+--[=[
+ d888b  db    db d888888b      .d888b.      db      db    db  .d8b.  
+88' Y8b 88    88   `88'        VP  `8D      88      88    88 d8' `8b 
+88      88    88    88            odD'      88      88    88 88ooo88 
+88  ooo 88    88    88          .88'        88      88    88 88~~~88 
+88. ~8~ 88b  d88   .88.        j88.         88booo. 88b  d88 88   88    @uniquadev
+ Y888P  ~Y8888P' Y888888P      888888D      Y88888P ~Y8888P' YP   YP  CONVERTER 
+
+designed using localmaze gui creator (Fixed & Functional)
+]=]
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local LMG2L = {};
+
+local function executeCode(code)
+	local func, err = loadstring(code)
+	if func then
+		pcall(func)
+	end
+end
+
+LMG2L["ScreenGui_1"] = Instance.new("ScreenGui", PlayerGui);
+LMG2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
+
+LMG2L["Frame_2"] = Instance.new("Frame", LMG2L["ScreenGui_1"]);
+LMG2L["Frame_2"]["BorderSizePixel"] = 0;
+LMG2L["Frame_2"]["BackgroundColor3"] = Color3.fromRGB(116, 43, 195);
+LMG2L["Frame_2"]["Size"] = UDim2.new(0, 54, 0, 32);
+LMG2L["Frame_2"]["Position"] = UDim2.new(0, 398, 0, 126);
+LMG2L["Frame_2"]["BackgroundTransparency"] = 0.2;
+
+LMG2L["TextLabel_3"] = Instance.new("TextLabel", LMG2L["Frame_2"]);
+LMG2L["TextLabel_3"]["BorderSizePixel"] = 0;
+LMG2L["TextLabel_3"]["TextSize"] = 5;
+LMG2L["TextLabel_3"]["BackgroundColor3"] = Color3.fromRGB(132, 31, 255);
+LMG2L["TextLabel_3"]["Size"] = UDim2.new(0, 54, 0, 12);
+LMG2L["TextLabel_3"]["Text"] = [[super vip executor]];
+LMG2L["TextLabel_3"]["Position"] = UDim2.new(0, 0, 0, -8);
+LMG2L["TextLabel_3"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+
+LMG2L["TextBox_4"] = Instance.new("TextBox", LMG2L["Frame_2"]);
+LMG2L["TextBox_4"]["BorderSizePixel"] = 0;
+LMG2L["TextBox_4"]["TextSize"] = 7;
+LMG2L["TextBox_4"]["BackgroundColor3"] = Color3.fromRGB(105, 90, 189);
+LMG2L["TextBox_4"]["Size"] = UDim2.new(0, 46, 0, 16);
+LMG2L["TextBox_4"]["Position"] = UDim2.new(0, 4, 0, 4);
+LMG2L["TextBox_4"]["Text"] = [[]];
+LMG2L["TextBox_4"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+LMG2L["TextBox_4"]["ClearTextOnFocus"] = false;
+LMG2L["TextBox_4"]["MultiLine"] = true;
+LMG2L["TextBox_4"]["TextWrapped"] = true;
+LMG2L["TextBox_4"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+LMG2L["TextBox_4"]["TextYAlignment"] = Enum.TextYAlignment.Top;
+
+LMG2L["UIDragDetector_5"] = Instance.new("UIDragDetector", LMG2L["Frame_2"]);
+
+LMG2L["execute_6"] = Instance.new("TextButton", LMG2L["Frame_2"]);
+LMG2L["execute_6"]["BorderSizePixel"] = 0;
+LMG2L["execute_6"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+LMG2L["execute_6"]["Size"] = UDim2.new(0, 18, 0, 8);
+LMG2L["execute_6"]["Text"] = [[exe]];
+LMG2L["execute_6"]["Name"] = [[execute]];
+LMG2L["execute_6"]["Position"] = UDim2.new(0, 2, 0, 22);
+LMG2L["execute_6"]["TextSize"] = 6;
+
+LMG2L["clear_7"] = Instance.new("TextButton", LMG2L["Frame_2"]);
+LMG2L["clear_7"]["BorderSizePixel"] = 0;
+LMG2L["clear_7"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+LMG2L["clear_7"]["Size"] = UDim2.new(0, 18, 0, 8);
+LMG2L["clear_7"]["Text"] = [[cl]];
+LMG2L["clear_7"]["Name"] = [[clear]];
+LMG2L["clear_7"]["Position"] = UDim2.new(0, 32, 0, 22);
+LMG2L["clear_7"]["TextSize"] = 6;
+
+LMG2L["execute_6"].MouseButton1Click:Connect(function()
+	local scriptText = LMG2L["TextBox_4"].Text
+	if scriptText and scriptText ~= "" then
+		executeCode(scriptText)
+	end
+end)
+
+LMG2L["clear_7"].MouseButton1Click:Connect(function()
+	LMG2L["TextBox_4"].Text = ""
+end)
+
+return LMG2L["ScreenGui_1"], require;
