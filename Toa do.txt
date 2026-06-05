@@ -1,0 +1,300 @@
+local LMG2L = {};
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local CoreGui = game:GetService("CoreGui")
+local player = Players.LocalPlayer
+
+local originalLightingData = {
+	FogStart = Lighting.FogStart,
+	FogEnd = Lighting.FogEnd,
+	Ambient = Lighting.Ambient,
+	OutdoorAmbient = Lighting.OutdoorAmbient,
+	ClockTime = Lighting.ClockTime,
+	GlobalShadows = Lighting.GlobalShadows,
+	Atmosphere = nil
+}
+local isEnhancedLighting = false
+local hasComboButton = true
+local isMinimized = false
+
+local lightingLocks = {}
+
+
+LMG2L["ScreenGui_1"] = Instance.new("ScreenGui", CoreGui);
+LMG2L["ScreenGui_1"].Name = "MinimalStats_Core";
+LMG2L["ScreenGui_1"].ResetOnSpawn = false;
+
+local MainFrame = Instance.new("Frame", LMG2L["ScreenGui_1"])
+MainFrame.Size = UDim2.new(0, 250, 0, 48)
+MainFrame.Position = UDim2.new(0, 15, 0, 15)
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainFrame.BackgroundTransparency = 0.5
+MainFrame.BorderSizePixel = 0
+
+local Corner = Instance.new("UICorner", MainFrame)
+Corner.CornerRadius = UDim.new(0, 6)
+
+local UIStroke = Instance.new("UIStroke", MainFrame)
+UIStroke.Color = Color3.fromRGB(255, 255, 255)
+UIStroke.Transparency = 0.8
+UIStroke.Thickness = 1
+
+local textLabel = Instance.new("TextLabel", MainFrame)
+textLabel.Size = UDim2.new(0, 155, 1, 0)
+textLabel.Position = UDim2.new(0, 12, 0, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.Font = Enum.Font.Code
+textLabel.TextSize = 13
+textLabel.TextColor3 = Color3.new(1, 1, 1)
+textLabel.TextXAlignment = Enum.TextXAlignment.Left
+textLabel.RichText = true
+
+local MinimizeBtn = Instance.new("TextButton", MainFrame)
+MinimizeBtn.Size = UDim2.new(1, 0, 1, 0)
+MinimizeBtn.BackgroundTransparency = 1
+MinimizeBtn.Text = ""
+MinimizeBtn.ZIndex = 5
+
+local ComboBtn = Instance.new("TextButton", MainFrame)
+ComboBtn.Name = "ComboButton"
+ComboBtn.Size = UDim2.new(0, 75, 0, 28)
+ComboBtn.Position = UDim2.new(1, -85, 0.5, -14)
+ComboBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ComboBtn.BackgroundTransparency = 0.3
+ComboBtn.Font = Enum.Font.Code
+ComboBtn.Text = "BRIGHT/FOG"
+ComboBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+ComboBtn.TextSize = 10
+ComboBtn.BorderSizePixel = 0
+ComboBtn.ZIndex = 10
+
+local BtnCorner = Instance.new("UICorner", ComboBtn)
+BtnCorner.CornerRadius = UDim.new(0, 4)
+
+local BtnStroke = Instance.new("UIStroke", ComboBtn)
+BtnStroke.Color = Color3.fromRGB(255, 50, 50)
+BtnStroke.Transparency = 0.5
+BtnStroke.Thickness = 1
+
+local frames = 0
+local fps = 0
+local lastUpdate = tick()
+
+RunService.RenderStepped:Connect(function()
+	frames += 1
+	local now = tick()
+
+	if now - lastUpdate >= 0.5 then
+		fps = math.floor(frames / (now - lastUpdate))
+		frames = 0
+		lastUpdate = now
+	end
+
+	if isMinimized then
+		textLabel.Text = "<font color='#ffaa00'>[ + ]</font>"
+	else
+		local char = player.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if root then
+			local p = root.Position
+			textLabel.Text = string.format(
+				"POS: <font color='#00aaff'>%.1f, %.1f, %.1f</font>\nFPS: <font color='#55ff7f'>%d</font>",
+				p.X, p.Y, p.Z, fps
+			)
+		else
+			textLabel.Text = string.format("POS: Waiting...\nFPS: %d", fps)
+		end
+	end
+end)
+
+local function lockProperty(property, value)
+	if lightingLocks[property] then lightingLocks[property]:Disconnect() end
+	Lighting[property] = value
+	lightingLocks[property] = Lighting:GetPropertyChangedSignal(property):Connect(function()
+		if isEnhancedLighting then
+			Lighting[property] = value
+		end
+	end)
+end
+
+local function clearLocks()
+	for prop, connection in pairs(lightingLocks) do
+		connection:Disconnect()
+		lightingLocks[prop] = nil
+	end
+end
+
+local function enableFullBrightNoFog()
+	originalLightingData.FogStart = Lighting.FogStart
+	originalLightingData.FogEnd = Lighting.FogEnd
+	originalLightingData.Ambient = Lighting.Ambient
+	originalLightingData.OutdoorAmbient = Lighting.OutdoorAmbient
+	originalLightingData.ClockTime = Lighting.ClockTime
+	originalLightingData.GlobalShadows = Lighting.GlobalShadows
+
+	lockProperty("FogStart", 9e9)
+	lockProperty("FogEnd", 9e9)
+	lockProperty("GlobalShadows", false)
+	lockProperty("ClockTime", 14)
+
+	local currentQuality = settings().Rendering.QualityLevel
+	local brightValue = 1.5
+
+	if currentQuality == Enum.QualityLevel.Level21 or currentQuality.Value == 21 then
+		brightValue = 1
+	end
+
+	lockProperty("Ambient", Color3.new(brightValue, brightValue, brightValue))
+	lockProperty("OutdoorAmbient", Color3.new(brightValue, brightValue, brightValue))
+
+	local atmos = Lighting:FindFirstChildOfClass("Atmosphere")
+	if atmos then
+		originalLightingData.Atmosphere = atmos
+		atmos.Parent = nil
+	end
+end
+
+local function disableFullBrightNoFog()
+	clearLocks()
+
+	Lighting.FogStart = originalLightingData.FogStart
+	Lighting.FogEnd = originalLightingData.FogEnd
+	Lighting.GlobalShadows = originalLightingData.GlobalShadows
+	Lighting.ClockTime = originalLightingData.ClockTime
+	Lighting.Ambient = originalLightingData.Ambient
+	Lighting.OutdoorAmbient = originalLightingData.OutdoorAmbient
+
+	if originalLightingData.Atmosphere then
+		originalLightingData.Atmosphere.Parent = Lighting
+		originalLightingData.Atmosphere = nil
+	end
+end
+
+settings().Rendering:GetPropertyChangedSignal("QualityLevel"):Connect(function()
+	if isEnhancedLighting then
+		local currentQuality = settings().Rendering.QualityLevel
+		local brightValue = 1.5
+		if currentQuality == Enum.QualityLevel.Level21 or currentQuality.Value == 21 then
+			brightValue = 1
+		end
+		lockProperty("Ambient", Color3.new(brightValue, brightValue, brightValue))
+		lockProperty("OutdoorAmbient", Color3.new(brightValue, brightValue, brightValue))
+	end
+end)
+
+Lighting.ChildAdded:Connect(function(child)
+	if isEnhancedLighting and child:IsA("Atmosphere") then
+		originalLightingData.Atmosphere = child
+		child.Parent = nil
+	end
+end)
+
+local holdGuiTime = 0
+local guiHolding = false
+
+local function toggleMinimize()
+	isMinimized = not isMinimized
+	if isMinimized then
+		MainFrame.Size = UDim2.new(0, 45, 0, 45)
+		textLabel.Size = UDim2.new(1, 0, 1, 0)
+		textLabel.TextXAlignment = Enum.TextXAlignment.Center
+		if hasComboButton then ComboBtn.Visible = false end
+		MinimizeBtn.Visible = true
+	else
+		if hasComboButton then
+			MainFrame.Size = UDim2.new(0, 250, 0, 48)
+			textLabel.Size = UDim2.new(0, 155, 1, 0)
+		else
+			MainFrame.Size = UDim2.new(0, 180, 0, 48)
+			textLabel.Size = UDim2.new(1, -20, 1, 0)
+		end
+		textLabel.TextXAlignment = Enum.TextXAlignment.Left
+		if hasComboButton then ComboBtn.Visible = true end
+		MinimizeBtn.Visible = false
+	end
+end
+
+MainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		guiHolding = true
+		local currentHold = tick()
+		holdGuiTime = currentHold
+		task.wait(0.5)
+
+		if guiHolding and holdGuiTime == currentHold then
+			toggleMinimize()
+		end
+	end
+end)
+
+MainFrame.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		guiHolding = false
+	end
+end)
+
+local btnHolding = false
+local holdBtnTime = 0
+
+ComboBtn.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		btnHolding = true
+		local currentHold = tick()
+		holdBtnTime = currentHold
+
+		task.wait(0.6)
+		if btnHolding and holdBtnTime == currentHold then
+			hasComboButton = false
+			ComboBtn:Destroy()
+
+			if not isMinimized then
+				MainFrame.Size = UDim2.new(0, 180, 0, 48)
+				textLabel.Size = UDim2.new(1, -20, 1, 0)
+			end
+			btnHolding = false
+		end
+	end
+end)
+
+ComboBtn.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		if btnHolding then
+			btnHolding = false
+			isEnhancedLighting = not isEnhancedLighting
+			if isEnhancedLighting then
+				ComboBtn.Text = "LIGHT ON"
+				ComboBtn.TextColor3 = Color3.fromRGB(85, 255, 127)
+				BtnStroke.Color = Color3.fromRGB(85, 255, 127)
+				enableFullBrightNoFog()
+			else
+				ComboBtn.Text = "BRIGHT/FOG"
+				ComboBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+				BtnStroke.Color = Color3.fromRGB(255, 50, 50)
+				disableFullBrightNoFog()
+			end
+		end
+	end
+end)
+
+local GuiService = game:GetService("GuiService")
+pcall(function()
+    CoreGui.RobloxGui.CoreScripts["NetworkPause"]:Destroy()
+end)
+
+local function disablePause()
+    pcall(function()
+        if Players.LocalPlayer then
+            Players.LocalPlayer.GameplayPaused = false
+        end
+        GuiService:SetGameplayPausedNotificationEnabled(false)
+    end)
+end
+
+task.spawn(function()
+    while task.wait() do
+        disablePause()
+    end
+end)
+
+return LMG2L["ScreenGui_1"];
